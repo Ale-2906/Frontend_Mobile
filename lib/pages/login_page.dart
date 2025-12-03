@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import 'home_page.dart';
+import 'auth/forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,18 +12,19 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
-  final _passCtrl  = TextEditingController();
+  final _passCtrl = TextEditingController();
 
   bool _remember = false;
-  bool _obscure  = true;
-  bool _loading  = false;
+  bool _obscure = true;
+  bool _loading = false;
 
   String _nameFromEmail(String email) {
     final beforeAt = email.split('@').first.replaceAll('.', ' ').trim();
     if (beforeAt.isEmpty) return 'Usuario';
     return beforeAt
         .split(RegExp(r'\s+'))
-        .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1).toLowerCase())
+        .map((w) =>
+            w.isEmpty ? w : w[0].toUpperCase() + w.substring(1).toLowerCase())
         .join(' ');
   }
 
@@ -48,7 +50,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final viewInsets = MediaQuery.of(context).viewInsets.bottom; // altura del teclado
+    final viewInsets =
+        MediaQuery.of(context).viewInsets.bottom; // altura del teclado
     return Scaffold(
       backgroundColor: AppColors.background,
       // ayuda a que el cuerpo se reajuste cuando aparece el teclado
@@ -58,7 +61,8 @@ class _LoginPageState extends State<LoginPage> {
           builder: (context, constraints) {
             return SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.only(bottom: viewInsets), // evita que el teclado tape campos
+              padding: EdgeInsets.only(
+                  bottom: viewInsets), // evita que el teclado tape campos
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: Column(
@@ -84,7 +88,8 @@ class _LoginPageState extends State<LoginPage> {
                           SizedBox(height: 14),
                           Text(
                             'Gestión de Inventario',
-                            style: TextStyle(color: Colors.white70, fontSize: 14),
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 14),
                           ),
                         ],
                       ),
@@ -124,10 +129,11 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 22),
-
                                   const Text(
                                     'Correo Electrónico',
-                                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14),
                                   ),
                                   const SizedBox(height: 6),
                                   TextFormField(
@@ -135,31 +141,42 @@ class _LoginPageState extends State<LoginPage> {
                                     keyboardType: TextInputType.emailAddress,
                                     decoration: InputDecoration(
                                       hintText: 'empleado@negocio.com',
-                                      hintStyle: const TextStyle(color: Colors.grey),
-                                      prefixIcon: const Icon(Icons.mail_outline),
+                                      hintStyle:
+                                          const TextStyle(color: Colors.grey),
+                                      prefixIcon:
+                                          const Icon(Icons.mail_outline),
                                       filled: true,
                                       fillColor: const Color(0xFFF3F4F6),
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 14),
                                       enabledBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(color: Colors.transparent),
+                                        borderSide: const BorderSide(
+                                            color: Colors.transparent),
                                       ),
                                       focusedBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(color: Color(0xFF1D4ED8), width: 1.5),
+                                        borderSide: const BorderSide(
+                                            color: Color(0xFF1D4ED8),
+                                            width: 1.5),
                                       ),
                                     ),
                                     validator: (v) {
-                                      if (v == null || v.isEmpty) return 'Ingrese su correo';
-                                      final ok = RegExp(r'^[\w\.\-]+@[\w\.\-]+\.\w+$').hasMatch(v);
+                                      if (v == null || v.isEmpty)
+                                        return 'Ingrese su correo';
+                                      final ok =
+                                          RegExp(r'^[\w\.\-]+@[\w\.\-]+\.\w+$')
+                                              .hasMatch(v);
                                       return ok ? null : 'Correo no válido';
                                     },
                                   ),
-
                                   const SizedBox(height: 16),
                                   const Text(
                                     'Contraseña',
-                                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14),
                                   ),
                                   const SizedBox(height: 6),
                                   TextFormField(
@@ -167,57 +184,81 @@ class _LoginPageState extends State<LoginPage> {
                                     obscureText: _obscure,
                                     decoration: InputDecoration(
                                       hintText: '••••••••',
-                                      hintStyle: const TextStyle(color: Colors.grey),
-                                      prefixIcon: const Icon(Icons.lock_outline),
+                                      hintStyle:
+                                          const TextStyle(color: Colors.grey),
+                                      prefixIcon:
+                                          const Icon(Icons.lock_outline),
                                       suffixIcon: IconButton(
                                         icon: Icon(
-                                          _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                          _obscure
+                                              ? Icons.visibility_outlined
+                                              : Icons.visibility_off_outlined,
                                         ),
-                                        onPressed: () => setState(() => _obscure = !_obscure),
+                                        onPressed: () => setState(
+                                            () => _obscure = !_obscure),
                                       ),
                                       filled: true,
                                       fillColor: const Color(0xFFF3F4F6),
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 14),
                                       enabledBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(color: Colors.transparent),
+                                        borderSide: const BorderSide(
+                                            color: Colors.transparent),
                                       ),
                                       focusedBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(color: Color(0xFF1D4ED8), width: 1.5),
+                                        borderSide: const BorderSide(
+                                            color: Color(0xFF1D4ED8),
+                                            width: 1.5),
                                       ),
                                     ),
-                                    validator: (v) => (v == null || v.length < 4) ? 'Mínimo 4 caracteres' : null,
+                                    validator: (v) =>
+                                        (v == null || v.length < 4)
+                                            ? 'Mínimo 4 caracteres'
+                                            : null,
                                   ),
-
                                   const SizedBox(height: 10),
                                   Row(
                                     children: [
                                       Checkbox(
                                         value: _remember,
-                                        onChanged: (v) => setState(() => _remember = v ?? false),
+                                        onChanged: (v) => setState(
+                                            () => _remember = v ?? false),
                                         activeColor: AppColors.navy,
                                       ),
                                       const Text('Recordarme'),
                                       const Spacer(),
                                       TextButton(
-                                        onPressed: () {},
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const ForgotPasswordPage(),
+                                            ),
+                                          );
+                                        },
                                         child: const Text(
                                           '¿Olvidaste tu contraseña?',
-                                          style: TextStyle(color: AppColors.navy),
+                                          style:
+                                              TextStyle(color: AppColors.navy),
                                         ),
                                       ),
                                     ],
                                   ),
-
                                   const SizedBox(height: 8),
                                   SizedBox(
                                     width: double.infinity,
                                     child: ElevatedButton(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF1D4ED8),
+                                        backgroundColor:
+                                            const Color(0xFF1D4ED8),
                                         foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12)),
                                         elevation: 3,
                                       ),
                                       onPressed: _loading ? null : _onSubmit,
@@ -225,11 +266,15 @@ class _LoginPageState extends State<LoginPage> {
                                           ? const SizedBox(
                                               width: 22,
                                               height: 22,
-                                              child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
+                                              child: CircularProgressIndicator(
+                                                  strokeWidth: 2.4,
+                                                  color: Colors.white),
                                             )
                                           : const Text(
                                               'Iniciar Sesión',
-                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16),
                                             ),
                                     ),
                                   ),
@@ -259,7 +304,8 @@ class _LogoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Tamaño responsivo según ancho de pantalla
-    final double size = (MediaQuery.of(context).size.width * 0.34).clamp(96, 160).toDouble();
+    final double size =
+        (MediaQuery.of(context).size.width * 0.34).clamp(96, 160).toDouble();
     return SizedBox(
       height: size,
       width: size,
