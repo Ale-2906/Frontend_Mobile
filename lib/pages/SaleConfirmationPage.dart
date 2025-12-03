@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import '../ui/components/layout/section_card.dart';
+import '../ui/components/buttons/primary_button.dart';
+import '../ui/components/buttons/secondary_button.dart';
+import '../ui/components/misc/check_circle.dart';
+import '../ui/theme/colors.dart';
 
 class SaleConfirmationPage extends StatelessWidget {
-  final Map<dynamic, int> products; // producto + cantidad
+  final Map<dynamic, int> products; // Producto + cantidad
   final double total;
 
   const SaleConfirmationPage({
@@ -13,30 +18,24 @@ class SaleConfirmationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffF5F7FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
           "Detalles de Venta",
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(color: AppColors.card),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.navy,
         elevation: 0.2,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: AppColors.card),
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-
             const SizedBox(height: 10),
 
-            // ✔ CHECK CIRCLE
-            const CircleAvatar(
-              radius: 42,
-              backgroundColor: Color(0xffDCFCE7),
-              child: Icon(Icons.check, size: 50, color: Color(0xff16A34A)),
-            ),
+            /// ✔ CHECK CIRCLE
+            const CheckCircle(),
 
             const SizedBox(height: 12),
 
@@ -45,7 +44,7 @@ class SaleConfirmationPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: Color(0xff0F172A),
+                color: AppColors.textPrimary,
               ),
             ),
 
@@ -58,8 +57,8 @@ class SaleConfirmationPage extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // 🧾 INFORMACIÓN DE LA TRANSACCIÓN
-            _buildCard(
+            /// 🧾 INFORMACIÓN DE LA TRANSACCIÓN
+            SectionCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -74,14 +73,13 @@ class SaleConfirmationPage extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // 🛒 PRODUCTOS
-            _buildCard(
+            /// 🛒 PRODUCTOS VENDIDOS
+            SectionCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _title("Productos Vendidos"),
                   const SizedBox(height: 12),
-
                   ...products.entries.map((e) {
                     final p = e.key;
                     final qty = e.value;
@@ -108,7 +106,7 @@ class SaleConfirmationPage extends StatelessWidget {
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.black87,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ],
@@ -118,7 +116,7 @@ class SaleConfirmationPage extends StatelessWidget {
                             "$qty × \$${p.price.toStringAsFixed(2)}",
                             style: const TextStyle(
                               fontSize: 13,
-                              color: Colors.grey,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -131,30 +129,22 @@ class SaleConfirmationPage extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // 🔘 BOTONES DE ACCIÓN
+            /// 🔘 BOTONES DE ACCIÓN
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: SecondaryButton(
+                    text: "Compartir",
+                    icon: Icons.share_outlined,
                     onPressed: () {},
-                    icon: const Icon(Icons.share_outlined),
-                    label: const Text("Compartir"),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: Colors.grey),
-                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: SecondaryButton(
+                    text: "Recibo",
+                    icon: Icons.receipt_long,
                     onPressed: () {},
-                    icon: const Icon(Icons.receipt_long),
-                    label: const Text("Recibo"),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: Colors.grey),
-                    ),
                   ),
                 ),
               ],
@@ -162,23 +152,10 @@ class SaleConfirmationPage extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // NUEVA VENTA
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff0F6EFD),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text(
-                  "Nueva Venta",
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                ),
-              ),
+            /// NUEVA VENTA
+            PrimaryButton(
+              text: "Nueva Venta",
+              onPressed: () => Navigator.pop(context),
             ),
 
             const SizedBox(height: 30),
@@ -188,8 +165,7 @@ class SaleConfirmationPage extends StatelessWidget {
     );
   }
 
-  // 🔧 WIDGETS REUSABLES
-
+  /// 🔧 WIDGETS REUTILIZABLES
   Widget _title(String t) => Text(
         t,
         style: const TextStyle(
@@ -204,28 +180,12 @@ class SaleConfirmationPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(key,
-                style: const TextStyle(color: Colors.grey, fontSize: 14)),
+                style: const TextStyle(
+                    color: AppColors.textSecondary, fontSize: 14)),
             Text(value,
                 style:
                     const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
           ],
         ),
-      );
-
-  Widget _buildCard({required Widget child}) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: Offset(0, 2),
-            )
-          ],
-        ),
-        child: child,
       );
 }
