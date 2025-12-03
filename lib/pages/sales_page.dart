@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
-import '../main.dart'; // Para AppColors
+import '../main.dart';
+import 'package:inventsmart_mobile/pages/SaleConfirmationPage.dart';
+
+// COMPONENTES PROPIOS
+import '../ui/components/layout/screen_wrapper.dart';
+import '../ui/components/layout/page_title.dart';
+import '../ui/components/buttons/primary_button.dart';
+import '../ui/components/inputs/text_input.dart';
+import '../ui/components/modals/confirmation_modal.dart';
 
 class SalesPage extends StatefulWidget {
   const SalesPage({super.key});
@@ -19,6 +27,7 @@ class _SalesPageState extends State<SalesPage> {
   ];
 
   final Map<_Product, int> _cart = {};
+  bool _showCart = false;
 
   double get _total => _cart.entries
       .map((e) => e.key.price * e.value)
@@ -52,8 +61,7 @@ class _SalesPageState extends State<SalesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return ScreenWrapper(
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.3,
@@ -63,21 +71,47 @@ class _SalesPageState extends State<SalesPage> {
               color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Nueva Venta',
-                style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 20)),
-            Text('Agrega productos al carrito',
-                style: TextStyle(
-                    color: AppColors.textSecondary, fontSize: 12)),
-          ],
+
+        title: const PageTitle(
+          title: 'Nueva Venta',
+          size: 20,
         ),
+
+        actions: [
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.shopping_cart_outlined,
+                    color: AppColors.textPrimary, size: 28),
+                onPressed: _cart.isEmpty ? null : () => _openCartModal(context),
+              ),
+              if (_cart.isNotEmpty)
+                Positioned(
+                  right: 4,
+                  top: 6,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      _cart.length.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                )
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
-      body: Column(
+
+      child: Column(
         children: [
           Expanded(
             child: SingleChildScrollView(
@@ -85,105 +119,101 @@ class _SalesPageState extends State<SalesPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🔍 Buscador
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    height: 44,
-                    child: const Row(
-                      children: [
-                        Icon(Icons.search, color: AppColors.textSecondary),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Buscar productos...',
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  
+                  /// 🔍 BUSCADOR (USANDO TU COMPONENTE)
+                  TextInput(
+                    hint: "Buscar productos...",
+                    controller: TextEditingController(),
+                    suffix: const Icon(Icons.search, color: Colors.grey),
                   ),
+
                   const SizedBox(height: 22),
 
-                  // 🛒 Carrito
-                  if (_cart.isNotEmpty) ...[
-                    const Text('Carrito',
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary)),
-                    const SizedBox(height: 8),
-                    ..._cart.entries.map((e) {
-                      final p = e.key;
-                      final qty = e.value;
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(p.name,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.textPrimary)),
-                                  Text('\$${p.price.toStringAsFixed(2)} c/u',
-                                      style: const TextStyle(
-                                          fontSize: 13,
-                                          color: AppColors.textSecondary)),
-                                ],
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.remove_circle_outline,
-                                      color: AppColors.textSecondary),
-                                  onPressed: () => _removeFromCart(p),
-                                ),
-                                Text('$qty',
-                                    style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold)),
-                                IconButton(
-                                  icon: const Icon(Icons.add_circle_outline,
-                                      color: AppColors.navy),
-                                  onPressed: () => _addToCart(p),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.close_rounded,
-                                      color: Colors.redAccent),
-                                  onPressed: () => _deleteFromCart(p),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 12),
-                  ],
+                  /// 🛒 CARRITO MOSTRAR/OCULTAR
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: _showCart && _cart.isNotEmpty
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const PageTitle(title: "Carrito", size: 16),
+                              const SizedBox(height: 8),
 
-                  // 📦 Productos disponibles
-                  Text('Productos Disponibles (${_products.length})',
-                      style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary)),
+                              ..._cart.entries.map((e) {
+                                final p = e.key;
+                                final qty = e.value;
+
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(p.name,
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.w700,
+                                                    color: AppColors.textPrimary)),
+                                            Text(
+                                              '\$${p.price.toStringAsFixed(2)} c/u',
+                                              style: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: AppColors.textSecondary),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.remove_circle_outline),
+                                            onPressed: () => _removeFromCart(p),
+                                          ),
+                                          Text(
+                                            '$qty',
+                                            style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.add_circle_outline),
+                                            onPressed: () => _addToCart(p),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.close_rounded,
+                                                color: Colors.redAccent),
+                                            onPressed: () => _deleteFromCart(p),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+
+                              const SizedBox(height: 12),
+                            ],
+                          )
+                        : const SizedBox(),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  /// 📦 PRODUCTOS
+                  PageTitle(
+                    title: "Productos Disponibles (${_products.length})",
+                    size: 16,
+                  ),
                   const SizedBox(height: 12),
+
                   Wrap(
                     spacing: 12,
                     runSpacing: 12,
@@ -215,14 +245,18 @@ class _SalesPageState extends State<SalesPage> {
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.textPrimary)),
                               const SizedBox(height: 4),
-                              Text('\$${p.price.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                      color: Color(0xFF22C55E),
-                                      fontWeight: FontWeight.w800)),
-                              Text('Stock: ${p.stock}',
-                                  style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.textSecondary)),
+                              Text(
+                                '\$${p.price.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                    color: Color(0xFF22C55E),
+                                    fontWeight: FontWeight.w800),
+                              ),
+                              Text(
+                                'Stock: ${p.stock}',
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary),
+                              ),
                             ],
                           ),
                         ),
@@ -234,7 +268,7 @@ class _SalesPageState extends State<SalesPage> {
             ),
           ),
 
-          // 💰 Total y botón
+          /// 💰 TOTAL + BOTÓN (REEMPLAZADO CON PrimaryButton)
           Container(
             decoration: const BoxDecoration(
               color: Colors.white,
@@ -256,50 +290,60 @@ class _SalesPageState extends State<SalesPage> {
                         const Text('Total',
                             style: TextStyle(
                                 color: AppColors.textSecondary, fontSize: 14)),
-                        Text('\$${_total.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.textPrimary)),
+                        Text(
+                          '\$${_total.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.textPrimary),
+                        ),
                       ],
                     ),
                     const Spacer(),
-                    Text('${_cart.length} productos',
-                        style: const TextStyle(color: AppColors.textSecondary))
+                    Text(
+                      '${_cart.length} productos',
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    )
                   ],
                 ),
                 const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: _cart.isEmpty
-                        ? null
-                        : () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Venta procesada exitosamente ✅'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                            setState(() => _cart.clear());
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF16A34A),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      elevation: 3,
-                    ),
-                    child: const Text('Procesar Venta',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
-                  ),
+
+                PrimaryButton(
+                  text: "Procesar Venta",
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Venta procesada exitosamente ✅'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            SaleConfirmationPage(products: _cart, total: _total),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// 🚀 MODAL DEL CARRITO (AHORA USA TU MÉTODO showConfirmationModal)
+  void _openCartModal(BuildContext context) {
+    showConfirmationModal(
+      context: context,
+      content: _CartModal(
+        cart: _cart,
+        total: _total,
+        add: _addToCart,
+        remove: _removeFromCart,
+        delete: _deleteFromCart,
       ),
     );
   }
@@ -311,4 +355,118 @@ class _Product {
   final int stock;
   const _Product(
       {required this.name, required this.price, required this.stock});
+}
+
+/// ======================================================
+/// WIDGET DEL MODAL (NO TOCA TU LÓGICA, SOLO UI)
+/// ======================================================
+class _CartModal extends StatelessWidget {
+  final Map<_Product, int> cart;
+  final double total;
+  final Function(_Product) add;
+  final Function(_Product) remove;
+  final Function(_Product) delete;
+
+  const _CartModal({
+    super.key,
+    required this.cart,
+    required this.total,
+    required this.add,
+    required this.remove,
+    required this.delete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 10),
+        const Text(
+          "Carrito de Compras",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        SizedBox(
+          height: 350,
+          child: ListView(
+            children: cart.entries.map((e) {
+              final p = e.key;
+              final qty = e.value;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            p.name,
+                            style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary),
+                          ),
+                          Text(
+                            "\$${p.price.toStringAsFixed(2)} c/u",
+                            style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline),
+                          onPressed: () => remove(p),
+                        ),
+                        Text(
+                          "$qty",
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline),
+                          onPressed: () => add(p),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded,
+                              color: Colors.red),
+                          onPressed: () => delete(p),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        PrimaryButton(
+          text: "Procesar Venta",
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ],
+    );
+  }
 }
