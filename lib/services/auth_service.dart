@@ -1,48 +1,50 @@
-// services/auth_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart'; // kReleaseMode
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'config/api_config.dart';
+import 'models/user.dart';
 
 class AuthService {
-  static const _base = 'https://reqres.in/api';
-  static const _storage = FlutterSecureStorage();
+  static Future<User> login(String correo, String contrasena) async {
+    final url = Uri.parse("${ApiConfig.baseUrl}/auth/login");
 
-  static Future<String> login(String email, String password) async {
-    // MOCK en desarrollo: acepta cualquier correo válido + pass >=4
-    if (!kReleaseMode) {
-      final okEmail = RegExp(r'^[\w\.\-]+@[\w\.\-]+\.\w+$').hasMatch(email);
-      if (okEmail && password.length >= 4) {
-        const fakeToken = 'dev_fake_token_123';
-        await _storage.write(key: 'token', value: fakeToken);
-        return fakeToken;
-      }
-    }
-
-    // PRODUCCIÓN: llamada real
-    final url = Uri.parse('$_base/login');
-    final res = await http.post(
+    final response = await http.post(
       url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "correo": correo,
+        "contrasena": contrasena,
+      }),
     );
 
-    // Para depurar desde la consola del navegador
-    // ignore: avoid_print
-    print('LOGIN status: ${res.statusCode} body: ${res.body}');
+    final data = jsonDecode(response.body);
 
-    if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
-      final token = data['token'] as String;
-      await _storage.write(key: 'token', value: token);
-      return token;
+    if (response.statusCode == 200 && data["success"] == true) {
+      final usuario = data["data"]["usuario"];
+      final token = data["data"]["token"];
+
+      // ✅✅✅ GUARDAR TOKEN LOCALMENTE
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', token);
+
+      return User.fromJson(usuario, token);
     } else {
-      final body = jsonDecode(res.body.isEmpty ? '{}' : res.body);
-      final msg = body['error'] ?? 'Credenciales inválidas';
-      throw Exception(msg);
+      throw Exception(data["message"] ?? "Error al iniciar sesión");
     }
   }
 
-  static Future<void> logout() async => _storage.delete(key: 'token');
-  static Future<String?> getToken() => _storage.read(key: 'token');
+  // ✅ CERRAR SESIÓN
+  static Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
+
+  // ✅ OBTENER TOKEN DONDE SEA
+  static Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
 }

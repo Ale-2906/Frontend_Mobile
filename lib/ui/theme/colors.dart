@@ -14,6 +14,7 @@ class AppColors {
 
   static const success = Color(0xFF10B981);
   static const danger = Color(0xFFEF4444);
+  static const confirmacionVenta = Color(0xffDCFCE7);
   
   static const emailInput = Color(0xFFF3F4F6);
   static const text=Colors.white70;
