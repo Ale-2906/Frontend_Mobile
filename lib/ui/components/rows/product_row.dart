@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventsmart_mobile/ui/theme/colors.dart';
-import 'package:inventsmart_mobile/models/product.dart';
+import 'package:inventsmart_mobile/services/models/product.dart';
 
 class ProductRow extends StatelessWidget {
   final Product product;

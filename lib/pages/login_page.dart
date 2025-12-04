@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inventsmart_mobile/services/session_manager.dart';
 import '../ui/theme/colors.dart';
 import '../ui/components/buttons/primary_button.dart';
 import '../ui/components/inputs/email_input.dart';
@@ -8,6 +9,7 @@ import '../ui/components/layout/section_card.dart';
 import '../ui/components/layout/screen_wrapper.dart';
 import '../ui/components/layout/spacing.dart';
 import 'home_page.dart';
+import '../services/auth_service.dart'; 
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -24,33 +26,50 @@ class _LoginPageState extends State<LoginPage> {
   bool _remember = false;
   bool _loading = false;
 
-  String _nameFromEmail(String email) {
-    final beforeAt = email.split('@').first.replaceAll('.', ' ').trim();
-    if (beforeAt.isEmpty) return 'Usuario';
-    return beforeAt
-        .split(RegExp(r'\s+'))
-        .map((w) =>
-            w.isEmpty ? w : w[0].toUpperCase() + w.substring(1).toLowerCase())
-        .join(' ');
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _loading = true);
 
-    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      final user = await AuthService.login(
+        _emailCtrl.text.trim(),
+        _passCtrl.text.trim(),
+      );
 
-    if (!mounted) return;
-    setState(() => _loading = false);
+// ✅ GUARDAR USUARIO EN SESIÓN
+      SessionManager.setUsuario(user);
 
-    final displayName = _nameFromEmail(_emailCtrl.text.trim());
+      if (!mounted) return;
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => HomePage(userName: displayName),
-      ),
-    );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => HomePage(userName: user.nombre),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceAll("Exception:", "").trim(),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
   }
 
   @override
@@ -92,8 +111,10 @@ class _LoginPageState extends State<LoginPage> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: SectionCard(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 22, vertical: 26),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 26,
+                  ),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -137,31 +158,30 @@ class _LoginPageState extends State<LoginPage> {
                                   setState(() => _remember = v ?? false),
                               activeColor: AppColors.navy,
                             ),
-
-                            // separación fija clara entre checkbox y texto
                             const SizedBox(width: 8),
-
-                            // el texto "Recordarme" ocupa el espacio restante disponible
                             const Expanded(
                               child: Text(
                                 "Recordarme",
                                 style: TextStyle(fontSize: 14),
                               ),
                             ),
-
-                         
                           ],
                         ),
+
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                              onPressed: () {},
-                              child: const Text("¿Olvidaste tu contraseña?",
-                                  style: TextStyle(color: AppColors.navy))),
+                            onPressed: () {},
+                            child: const Text(
+                              "¿Olvidaste tu contraseña?",
+                              style: TextStyle(color: AppColors.navy),
+                            ),
+                          ),
                         ),
+
                         Spacing.vertical(16),
 
-                        // BOTÓN
+                        // ✅ BOTÓN
                         PrimaryButton(
                           text: "Iniciar Sesión",
                           loading: _loading,
@@ -182,7 +202,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-// LOGO RESPONSIVE
+// ✅ LOGO RESPONSIVE
 class _LogoBadge extends StatelessWidget {
   const _LogoBadge();
 
