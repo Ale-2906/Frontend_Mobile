@@ -7,6 +7,7 @@ import '../../ui/components/buttons/primary_button.dart';
 import '../../ui/components/layout/section_card.dart';
 import '../../ui/components/layout/spacing.dart';
 import 'verify_code_page.dart';
+import '../../services/auth_service.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -31,35 +32,42 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       setState(() => _isLoading = true);
 
       try {
-        // TODO: Llamada al endpoint POST /api/auth/forgot-password
-        await Future.delayed(const Duration(seconds: 2));
+      // ✅ Llamada al servicio
+      await AuthService.forgotPassword(_emailController.text);
 
-        if (mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => VerifyCodePage(
-                email: _emailController.text,
-              ),
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Código enviado a tu correo'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VerifyCodePage(
+              email: _emailController.text,
             ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al enviar el código: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {

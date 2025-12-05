@@ -6,6 +6,7 @@ import '../../ui/components/buttons/primary_button.dart';
 import '../../ui/components/layout/section_card.dart';
 import '../../ui/components/layout/spacing.dart';
 import 'reset_password_page.dart';
+import '../../services/auth_service.dart';
 
 class VerifyCodePage extends StatefulWidget {
   final String email;
@@ -74,85 +75,94 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
   }
 
   Future<void> _verifyCode() async {
-    String code = _getCode();
+  String code = _getCode();
+  
+  if (code.length != 6) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Por favor ingresa el código completo'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+    return;
+  }
+
+  setState(() => _isLoading = true);
+
+  try {
+    // ✅ Verificar código sin consumirlo
+    await AuthService.verifyCode(
+      correo: widget.email,
+      codigo: code,
+    );
     
-    if (code.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor ingresa el código completo'),
-          backgroundColor: Colors.orange,
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ResetPasswordPage(
+            email: widget.email,
+            verificationCode: code,
+          ),
         ),
       );
-      return;
     }
-
-    setState(() => _isLoading = true);
-
-    try {
-      // TODO: Llamada al endpoint POST /api/auth/verify-code
-      await Future.delayed(const Duration(seconds: 2));
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
       
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ResetPasswordPage(
-              email: widget.email,
-              verificationCode: code,
-            ),
-          ),
-        );
+      // Limpiar los campos del código
+      for (var controller in _controllers) {
+        controller.clear();
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Código incorrecto: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      _focusNodes[0].requestFocus();
+    }
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
+}
 
-  Future<void> _resendCode() async {
-    setState(() => _isLoading = true);
+Future<void> _resendCode() async {
+  setState(() => _isLoading = true);
 
-    try {
-      // TODO: Llamar nuevamente a POST /api/auth/forgot-password
-      await Future.delayed(const Duration(seconds: 2));
+  try {
+    // ✅ Llamada al servicio para reenviar
+    await AuthService.forgotPassword(widget.email);
+    
+    if (mounted) {
+      _remainingSeconds = 900;
+      _timer?.cancel();
+      _startTimer();
       
-      if (mounted) {
-        _remainingSeconds = 900;
-        _timer?.cancel();
-        _startTimer();
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Código reenviado exitosamente'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al reenviar código: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Código reenviado exitosamente'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {

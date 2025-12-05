@@ -4,6 +4,7 @@ import '../../ui/theme/colors.dart';
 import '../../ui/components/buttons/primary_button.dart';
 import '../../ui/components/layout/section_card.dart';
 import '../../ui/components/layout/spacing.dart';
+import '../../services/auth_service.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   final String email;
@@ -58,41 +59,51 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     });
   }
 
-  Future<void> _resetPassword() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+ Future<void> _resetPassword() async {
+  if (_formKey.currentState!.validate()) {
+    setState(() => _isLoading = true);
 
-      try {
-        // TODO: Llamada al endpoint POST /api/auth/reset-password
-        await Future.delayed(const Duration(seconds: 2));
+    try {
+      // ✅ Llamada al servicio
+      await AuthService.resetPassword(
+        correo: widget.email,
+        codigo: widget.verificationCode,
+        nuevaContrasena: _passwordController.text,
+      );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Contraseña restablecida exitosamente'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
         
+        // Espera un poco para que el usuario vea el mensaje
+        await Future.delayed(const Duration(seconds: 1));
+        
+        // Vuelve al login
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Contraseña restablecida exitosamente'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al restablecer contraseña: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
-
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
