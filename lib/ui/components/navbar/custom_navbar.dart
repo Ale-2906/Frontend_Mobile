@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventsmart_mobile/pages/sales_page.dart';
+import 'package:inventsmart_mobile/pages/stock/stock_page.dart';
 import 'navbar_item.dart';
 
 class CustomNavbar extends StatelessWidget {
@@ -34,14 +35,28 @@ class CustomNavbar extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (context) => const SalesPage(),
                 ),
-              );
-            },
+                ).then((_) {
+               
+                onChange(0);
+              });
+                  },
           ),
           NavbarItem(
-            icon: Icons.settings,
-            label: "Config",
+            icon: Icons.inventory_2_outlined,
+            label: "Stock",
             active: current == 2,
-            onTap: () => onChange(2),
+            onTap: () {
+              onChange(2);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const StockPage(),
+                ),
+                ).then((_) {
+    
+                onChange(0);
+              });
+            },
           ),
         ],
       ),

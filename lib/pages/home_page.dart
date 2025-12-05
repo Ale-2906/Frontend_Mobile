@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inventsmart_mobile/pages/login_page.dart';
 import 'package:inventsmart_mobile/pages/sales_page.dart';
+import 'package:inventsmart_mobile/pages/stock/stock_page.dart';
 
 // COMPONENTES
 import '../ui/components/dashboard/header_card.dart';
@@ -150,14 +151,21 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       const SizedBox(width: 14),
-                      Expanded(
-                        child: SecondaryButton(
-                          text: "Ver Stock",
-                          onPressed: () {},
-                        ),
-                      ),
-                    ],
-                  ),
+Expanded(
+  child: SecondaryButton(
+    text: "Ver Stock",
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const StockPage(),
+     ),
+          );
+        },
+      ),
+    ),
+  ],
+), // 
 
                   const SizedBox(height: 28),
 
