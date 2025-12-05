@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import '../../ui/theme/colors.dart';
+import '../../ui/components/buttons/primary_button.dart';
+import '../../ui/components/layout/section_card.dart';
+import '../../ui/components/layout/spacing.dart';
 import 'reset_password_page.dart';
 
 class VerifyCodePage extends StatefulWidget {
@@ -82,16 +86,12 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      // TODO: Aquí irá la llamada al endpoint POST /api/auth/verify-code
-      // Body: { "email": widget.email, "code": code }
+      // TODO: Llamada al endpoint POST /api/auth/verify-code
       await Future.delayed(const Duration(seconds: 2));
       
-      // Si es exitoso, navegar a la pantalla de resetear contraseña
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -114,24 +114,19 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
       }
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
   Future<void> _resendCode() async {
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       // TODO: Llamar nuevamente a POST /api/auth/forgot-password
       await Future.delayed(const Duration(seconds: 2));
       
       if (mounted) {
-        // Reiniciar timer
         _remainingSeconds = 900;
         _timer?.cancel();
         _startTimer();
@@ -154,9 +149,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
       }
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -164,202 +157,178 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+           physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Logo
-              Row(
-                children: [
-                  Icon(
-                    Icons.lock_outline,
-                    color: Colors.blue[700],
-                    size: 32,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'InventSmart',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue[700],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 40),
-
-              // Título
-              const Text(
-                'Recuperación de\nContraseña',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Descripción
-              Text(
-                'Has solicitado restablecer tu contraseña. Utiliza el siguiente código de verificación:',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 40),
-
-              // Campos de código
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(6, (index) {
-                  return SizedBox(
-                    width: 50,
-                    child: TextFormField(
-                      controller: _controllers[index],
-                      focusNode: _focusNodes[index],
-                      textAlign: TextAlign.center,
-                      keyboardType: TextInputType.number,
-                      maxLength: 1,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[700],
-                      ),
-                      decoration: InputDecoration(
-                        counterText: '',
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.blue[700]!,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
-                      onChanged: (value) {
-                        if (value.isNotEmpty && index < 5) {
-                          _focusNodes[index + 1].requestFocus();
-                        } else if (value.isEmpty && index > 0) {
-                          _focusNodes[index - 1].requestFocus();
-                        }
-                        
-                        // Auto-verificar cuando se completen los 6 dígitos
-                        if (index == 5 && value.isNotEmpty) {
-                          _verifyCode();
-                        }
-                      },
-                    ),
-                  );
-                }),
-              ),
-              const SizedBox(height: 32),
-
-              // Alerta de tiempo
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.orange[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.orange[200]!),
-                ),
+              // Logo - movido hacia arriba
+              Transform.translate(
+                offset: const Offset(0, -30),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.access_time, color: Colors.orange[700]),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Este código expira en ${_getFormattedTime()}',
-                        style: TextStyle(
-                          color: Colors.orange[900],
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                    Image.asset(
+                      'assets/images/logo_navbar.png',
+                      width: 200,
+                      height: 200,
+                      fit: BoxFit.contain,
+                      color: AppColors.navy,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              Spacing.vertical(4),
 
-              // Texto informativo
-              Text(
-                'Si no solicitaste este cambio, puedes ignorar este correo de forma segura.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 32),
+              // Card con formulario
+              Transform.translate(
+                offset: const Offset(0, -70),
+                child: SectionCard(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Verificación de\nCódigo',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                          height: 1.2,
+                        ),
+                      ),
+                      Spacing.vertical(16),
 
-              // Botón Verificar
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _verifyCode,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[700],
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text(
-                          'Verificar código',
+                      const Text(
+                        'Ingresa el código de 6 dígitos que enviamos a tu correo electrónico.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                      Spacing.vertical(32),
+
+                      // Campos de código
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: List.generate(6, (index) {
+                          return SizedBox(
+                            width: 45,
+                            child: TextFormField(
+                              controller: _controllers[index],
+                              focusNode: _focusNodes[index],
+                              textAlign: TextAlign.center,
+                              keyboardType: TextInputType.number,
+                              maxLength: 1,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.navy,
+                              ),
+                              decoration: InputDecoration(
+                                counterText: '',
+                                filled: true,
+                                fillColor: const Color(0xFFF3F4F6),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Colors.transparent),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.navy,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              onChanged: (value) {
+                                if (value.isNotEmpty && index < 5) {
+                                  _focusNodes[index + 1].requestFocus();
+                                } else if (value.isEmpty && index > 0) {
+                                  _focusNodes[index - 1].requestFocus();
+                                }
+                                
+                                if (index == 5 && value.isNotEmpty) {
+                                  _verifyCode();
+                                }
+                              },
+                            ),
+                          );
+                        }),
+                      ),
+                      Spacing.vertical(24),
+
+                      // Alerta de tiempo
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.orange[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.orange.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.access_time, color: Colors.orange[700], size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Expira en ${_getFormattedTime()}',
+                                style: TextStyle(
+                                  color: Colors.orange[900],
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Spacing.vertical(28),
+
+                      // Botón Verificar
+                      PrimaryButton(
+                        text: 'Verificar código',
+                        loading: _isLoading,
+                        onPressed: _verifyCode,
+                      ),
+                      Spacing.vertical(20),
+
+                      // Botón Reenviar código
+                      TextButton(
+                        onPressed: _isLoading ? null : _resendCode,
+                        child: const Text(
+                          '¿No recibiste el código? Reenviar',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            color: AppColors.navy,
+                            fontSize: 14,
                           ),
                         ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Botón Reenviar código
-              Center(
-                child: TextButton(
-                  onPressed: _isLoading ? null : _resendCode,
-                  child: Text(
-                    '¿No recibiste el código? Reenviar',
-                    style: TextStyle(
-                      color: Colors.blue[700],
-                      fontSize: 14,
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
+              Spacing.vertical(20),
             ],
           ),
         ),

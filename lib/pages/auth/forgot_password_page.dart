@@ -1,4 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../ui/theme/colors.dart';
+import '../../ui/components/buttons/primary_button.dart';
+//import '../../ui/components/inputs/email_input.dart';
+//import '../../ui/components/layout/page_title.dart';
+import '../../ui/components/layout/section_card.dart';
+import '../../ui/components/layout/spacing.dart';
 import 'verify_code_page.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
@@ -19,19 +26,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     super.dispose();
   }
 
-  // Función para enviar el código
   Future<void> _sendCode() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
       try {
-        // TODO: Aquí irá la llamada al endpoint POST /api/auth/forgot-password
-        // Por ahora simulamos un delay
+        // TODO: Llamada al endpoint POST /api/auth/forgot-password
         await Future.delayed(const Duration(seconds: 2));
-        
-        // Si es exitoso, navegar a la pantalla de verificación
+
         if (mounted) {
           Navigator.push(
             context,
@@ -43,7 +45,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           );
         }
       } catch (e) {
-        // Mostrar error
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -54,9 +55,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         }
       } finally {
         if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
+          setState(() => _isLoading = false);
         }
       }
     }
@@ -65,149 +64,161 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
+      // Esto hace que la barra de estado (hora, batería) sea visible
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        systemOverlayStyle:
+            SystemUiOverlayStyle.dark, // Iconos oscuros en la barra de estado
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Logo
-                Row(
+        // Reducir padding horizontal
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 20), // Reducido de 24 a 20
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Logo con imagen - movido hacia arriba
+              Transform.translate(
+                offset: const Offset(0, -30), // Números negativos lo suben
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.lock_outline,
-                      color: Colors.blue[700],
-                      size: 32,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'InventSmart',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[700],
-                      ),
+                    Image.asset(
+                      'assets/images/logo_navbar.png',
+                      width: 200,
+                      height: 200,
+                      fit: BoxFit.contain,
+                      color: AppColors.navy,
                     ),
                   ],
                 ),
-                const SizedBox(height: 40),
+              ),
+              Spacing.vertical(4),
 
-                // Título
-                const Text(
-                  'Recuperación de\nContraseña',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 16),
+              // Card con formulario
+              Transform.translate(
+                offset: const Offset(
+                    0, -70), // Ajusta el valor para subirlo más o menos
+                child: SectionCard(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 32), // Reducido de 24
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Recuperación de\nContraseña',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 26, // Reducido de 28
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                            height: 1.2,
+                          ),
+                        ),
+                        Spacing.vertical(16), // Reducido de 16
 
-                // Descripción
-                Text(
-                  'Ingresa tu correo electrónico y te enviaremos un código de verificación.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 40),
+                        const Text(
+                          'Ingresa tu correo electrónico y te enviaremos un código de verificación.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 15, // Reducido de 16
+                            color: AppColors.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                        Spacing.vertical(40), // Reducido de 32
 
-                // Campo de Email
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Correo electrónico',
-                    hintText: 'ejemplo@correo.com',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor ingresa tu correo';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
-                      return 'Ingresa un correo válido';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 32),
-
-                // Botón Enviar
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _sendCode,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[700],
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                        // Campo de Email
+                        // Reemplaza EmailInput por esto:
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: InputDecoration(
+                            labelText: 'Correo electrónico',
+                            labelStyle: const TextStyle(
+                              fontSize: 14,
+                              //color: AppColors.navy,
                             ),
-                          )
-                        : const Text(
-                            'Enviar código',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                            floatingLabelStyle: const TextStyle(
+                              color: AppColors.navy,
+                            ),
+                            hintText: 'empleado@negocio.com',
+                            hintStyle: const TextStyle(color: Colors.grey),
+                            prefixIcon: const Icon(Icons.mail_outline),
+                            filled: true,
+                            fillColor: const Color(0xFFF3F4F6),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 14),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide:
+                                  const BorderSide(color: Colors.transparent),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                  color: AppColors.navy,
+                                  width: 1.5), // Azul cuando tiene focus
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.red),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                  color: Colors.red, width: 1.5),
                             ),
                           ),
-                  ),
-                ),
-                const SizedBox(height: 24),
+                          validator: (v) {
+                            if (v == null || v.isEmpty)
+                              return 'Ingrese su correo';
+                            final ok = RegExp(r'^[\w\.\-]+@[\w\.\-]+\.\w+$')
+                                .hasMatch(v);
+                            return ok ? null : 'Correo no válido';
+                          },
+                        ),
+                        Spacing.vertical(28), // Reducido de 32
 
-                // Volver al login
-                Center(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      '¿Recordaste tu contraseña? Inicia sesión',
-                      style: TextStyle(
-                        color: Colors.blue[700],
-                        fontSize: 14,
-                      ),
+                        // Botón
+                        PrimaryButton(
+                          text: 'Enviar código',
+                          loading: _isLoading,
+                          onPressed: _sendCode,
+                        ),
+                        Spacing.vertical(20), // Reducido de 24
+
+                        // Link volver al login
+                        Center(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text(
+                              '¿Recordaste tu contraseña? Inicia sesión',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: AppColors.navy,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+              Spacing.vertical(20), // Espacio inferior
+            ],
           ),
         ),
       ),

@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../ui/theme/colors.dart';
+import '../../ui/components/buttons/primary_button.dart';
+import '../../ui/components/layout/section_card.dart';
+import '../../ui/components/layout/spacing.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   final String email;
@@ -22,30 +27,45 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  
+  // Estado de requisitos
+  bool _hasMinLength = false;
+  bool _hasUppercase = false;
+  bool _hasLowercase = false;
+  bool _hasNumber = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(_checkPasswordRequirements);
+  }
 
   @override
   void dispose() {
+    _passwordController.removeListener(_checkPasswordRequirements);
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
+  void _checkPasswordRequirements() {
+    final password = _passwordController.text;
+    setState(() {
+      _hasMinLength = password.length >= 8;
+      _hasUppercase = RegExp(r'[A-Z]').hasMatch(password);
+      _hasLowercase = RegExp(r'[a-z]').hasMatch(password);
+      _hasNumber = RegExp(r'\d').hasMatch(password);
+    });
+  }
+
   Future<void> _resetPassword() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
       try {
-        // TODO: Aquí irá la llamada al endpoint POST /api/auth/reset-password
-        // Body: { 
-        //   "email": widget.email,
-        //   "code": widget.verificationCode,
-        //   "newPassword": _passwordController.text 
-        // }
+        // TODO: Llamada al endpoint POST /api/auth/reset-password
         await Future.delayed(const Duration(seconds: 2));
         
-        // Si es exitoso, mostrar mensaje y volver al login
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -54,7 +74,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             ),
           );
           
-          // Volver al login (remover todas las pantallas anteriores)
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       } catch (e) {
@@ -68,9 +87,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         }
       } finally {
         if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
+          setState(() => _isLoading = false);
         }
       }
     }
@@ -79,260 +96,279 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Logo
-                Row(
+          physics: const ClampingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Logo - movido hacia arriba
+              Transform.translate(
+                offset: const Offset(0, -30),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.lock_reset,
-                      color: Colors.blue[700],
-                      size: 32,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'InventSmart',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[700],
-                      ),
+                    Image.asset(
+                      'assets/images/logo_navbar.png',
+                      width: 200,
+                      height: 200,
+                      fit: BoxFit.contain,
+                      color: AppColors.navy,
                     ),
                   ],
                 ),
-                const SizedBox(height: 40),
+              ),
+              Spacing.vertical(4),
 
-                // Título
-                const Text(
-                  'Crear Nueva\nContraseña',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Descripción
-                Text(
-                  'Tu nueva contraseña debe ser diferente a las contraseñas usadas anteriormente.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 40),
-
-                // Campo Nueva Contraseña
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Nueva contraseña',
-                    hintText: 'Mínimo 8 caracteres',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor ingresa una contraseña';
-                    }
-                    if (value.length < 8) {
-                      return 'La contraseña debe tener al menos 8 caracteres';
-                    }
-                    if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(value)) {
-                      return 'Debe contener mayúsculas, minúsculas y números';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // Campo Confirmar Contraseña
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
-                  decoration: InputDecoration(
-                    labelText: 'Confirmar contraseña',
-                    hintText: 'Ingresa nuevamente tu contraseña',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor confirma tu contraseña';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Las contraseñas no coinciden';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // Requisitos de contraseña
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue[200]!),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Tu contraseña debe contener:',
-                        style: TextStyle(
-                          color: Colors.blue[900],
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+              // Card con formulario
+              Transform.translate(
+                offset: const Offset(0, -70),
+                child: SectionCard(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Crear Nueva Contraseña',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                            height: 1.2,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildRequirement('Al menos 8 caracteres'),
-                      _buildRequirement('Una letra mayúscula'),
-                      _buildRequirement('Una letra minúscula'),
-                      _buildRequirement('Un número'),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
+                        Spacing.vertical(10),
 
-                // Botón Restablecer
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _resetPassword,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[700],
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                        const Text(
+                          'Tu nueva contraseña debe ser diferente a las contraseñas usadas anteriormente.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: AppColors.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                        Spacing.vertical(16),
+
+                        // Campo Nueva Contraseña
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          decoration: InputDecoration(
+                            labelText: 'Nueva contraseña',
+                          
+    floatingLabelStyle: const TextStyle(
+      color: AppColors.navy, // Color azul cuando tiene focus
+    ),
+                            hintText: 'Mínimo 8 caracteres',
+                            hintStyle: const TextStyle(color: Colors.grey),
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
-                          )
-                        : const Text(
-                            'Restablecer contraseña',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                            filled: true,
+                            fillColor: const Color(0xFFF3F4F6),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.transparent),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: AppColors.navy, width: 1.5),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.red),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.red, width: 1.5),
                             ),
                           ),
-                  ),
-                ),
-                const SizedBox(height: 24),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Por favor ingresa una contraseña';
+                            }
+                            if (!_hasMinLength || !_hasUppercase || !_hasLowercase || !_hasNumber) {
+                              return 'Debe cumplir todos los requisitos';
+                            }
+                            return null;
+                          },
+                        ),
+                        Spacing.vertical(20),
 
-                // Volver al login
-                Center(
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.of(context).popUntil((route) => route.isFirst);
-                    },
-                    child: Text(
-                      'Volver al inicio de sesión',
-                      style: TextStyle(
-                        color: Colors.blue[700],
-                        fontSize: 14,
-                      ),
+                        // Campo Confirmar Contraseña
+                        TextFormField(
+                          controller: _confirmPasswordController,
+                          obscureText: _obscureConfirmPassword,
+                          decoration: InputDecoration(
+                            labelText: 'Confirmar contraseña',
+                            floatingLabelStyle: const TextStyle(
+      color: AppColors.navy, // Color azul cuando tiene focus
+    ),
+                            hintText: 'Ingresa la contraseña',
+                            hintStyle: const TextStyle(color: Colors.grey),
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirmPassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                              onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF3F4F6),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.transparent),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: AppColors.navy, width: 1.5),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.red),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Por favor confirma tu contraseña';
+                            }
+                            if (value != _passwordController.text) {
+                              return 'Las contraseñas no coinciden';
+                            }
+                            return null;
+                          },
+                        ),
+                        Spacing.vertical(24),
+
+                        // Requisitos de contraseña con validación visual
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.navy.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.navy.withOpacity(0.2),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Tu contraseña debe contener:',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildRequirement(
+                                'Al menos 8 caracteres',
+                                _hasMinLength,
+                              ),
+                              _buildRequirement(
+                                'Una letra mayúscula',
+                                _hasUppercase,
+                              ),
+                              _buildRequirement(
+                                'Una letra minúscula',
+                                _hasLowercase,
+                              ),
+                              _buildRequirement(
+                                'Un número',
+                                _hasNumber,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Spacing.vertical(28),
+
+                        // Botón Restablecer
+                        PrimaryButton(
+                          text: 'Restablecer contraseña',
+                          loading: _isLoading,
+                          onPressed: _resetPassword,
+                        ),
+                        Spacing.vertical(20),
+
+                        // Volver al login
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).popUntil((route) => route.isFirst);
+                          },
+                          child: const Text(
+                            'Volver al inicio de sesión',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.navy,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+              Spacing.vertical(20),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildRequirement(String text) {
+  Widget _buildRequirement(String text, bool isMet) {
     return Padding(
-      padding: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
-          Icon(
-            Icons.check_circle_outline,
-            size: 16,
-            color: Colors.blue[700],
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            child: Icon(
+              isMet ? Icons.check_circle : Icons.check_circle_outline,
+              size: 18,
+              color: isMet ? Colors.green : AppColors.textSecondary,
+            ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: TextStyle(
-              color: Colors.blue[900],
-              fontSize: 13,
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: isMet ? AppColors.textPrimary : AppColors.textSecondary,
+                fontSize: 13,
+                fontWeight: isMet ? FontWeight.w500 : FontWeight.normal,
+              ),
             ),
           ),
         ],
