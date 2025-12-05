@@ -10,6 +10,7 @@ import '../ui/components/layout/screen_wrapper.dart';
 import '../ui/components/layout/spacing.dart';
 import 'home_page.dart';
 import '../services/auth_service.dart'; 
+import 'auth/forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -78,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
       child: SingleChildScrollView(
         child: Column(
           children: [
-            // 🔵 ENCABEZADO
+            // ENCABEZADO
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 30),
@@ -99,31 +100,26 @@ class _LoginPageState extends State<LoginPage> {
                   SizedBox(height: 8),
                   Text(
                     'Gestión de Inventario',
-                    style: TextStyle(color: AppColors.text, fontSize: 14),
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                 ],
               ),
             ),
 
-            // 🔵 FORMULARIO EN CARD
+            // FORMULARIO EN CARD
             Transform.translate(
               offset: const Offset(0, -28),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: SectionCard(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 22,
-                    vertical: 26,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 26),
                   child: Form(
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const PageTitle(title: "Iniciar Sesión"),
-
                         Spacing.vertical(6),
-
                         const Text(
                           "Ingresa tus credenciales de empleado",
                           style: TextStyle(
@@ -131,7 +127,6 @@ class _LoginPageState extends State<LoginPage> {
                             fontSize: 14,
                           ),
                         ),
-
                         Spacing.vertical(22),
 
                         // INPUT EMAIL
@@ -139,7 +134,6 @@ class _LoginPageState extends State<LoginPage> {
                           controller: _emailCtrl,
                           label: "Correo Electrónico",
                         ),
-
                         Spacing.vertical(16),
 
                         // INPUT PASSWORD
@@ -147,7 +141,6 @@ class _LoginPageState extends State<LoginPage> {
                           controller: _passCtrl,
                           label: "Contraseña",
                         ),
-
                         Spacing.vertical(10),
 
                         Row(
@@ -167,18 +160,25 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ],
                         ),
-
+                        
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ForgotPasswordPage(),
+                                ),
+                              );
+                            },
                             child: const Text(
                               "¿Olvidaste tu contraseña?",
                               style: TextStyle(color: AppColors.navy),
                             ),
                           ),
                         ),
-
+                        
                         Spacing.vertical(16),
 
                         // ✅ BOTÓN

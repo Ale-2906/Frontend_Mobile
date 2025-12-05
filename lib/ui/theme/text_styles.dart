@@ -7,7 +7,8 @@ class AppTextStyles {
     fontWeight: FontWeight.w800,
     color: AppColors.textPrimary,
   );
-static const subtitle = TextStyle(
+
+  static const subtitle = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w800,
     color: AppColors.textPrimary,
