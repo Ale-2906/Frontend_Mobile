@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:inventsmart_mobile/pages/login_page.dart';
 import 'package:inventsmart_mobile/pages/sales_page.dart';
 import 'package:inventsmart_mobile/pages/stock/stock_page.dart';
+import 'package:inventsmart_mobile/pages/alerts/alerts_page.dart';
 
 // COMPONENTES
 import '../ui/components/dashboard/header_card.dart';
@@ -67,7 +68,14 @@ class _HomePageState extends State<HomePage> {
                   // HEADER
                   HeaderCard(
                     username: widget.userName,
-                    onNotifications: () {},
+                    onNotifications: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AlertsPage(),
+                        ),
+                      );
+                    },
                     onLogout: () => _showLogoutModal(context),
                   ),
 
