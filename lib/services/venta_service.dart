@@ -67,4 +67,27 @@ class VentaService {
 
     return ventaId;
   }
+   // Total de ventas acumulado
+  static Future<Map<String, dynamic>> getTotalVentas() async {
+    final response = await http.get(Uri.parse("$baseUrl/ventas/total"));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['data'];
+    } else {
+      throw Exception("Error al obtener total de ventas");
+    }
+  }
+
+  // Total de ventas del día
+  static Future<Map<String, dynamic>> getTotalVentasHoy() async {
+    final response = await http.get(Uri.parse("$baseUrl/ventas/total-hoy"));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['data'];
+    } else {
+      throw Exception("Error al obtener total de ventas hoy");
+    }
+  }
 }
