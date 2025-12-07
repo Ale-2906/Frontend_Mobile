@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:inventsmart_mobile/pages/SaleConfirmationPage.dart';
+import 'package:inventsmart_mobile/pages/sales/SaleConfirmationPage.dart';
 
 // COMPONENTES PROPIOS
-import '../ui/components/layout/screen_wrapper.dart';
-import '../ui/components/layout/page_title.dart';
-import '../ui/components/buttons/primary_button.dart';
-import '../ui/components/inputs/text_input.dart';
-import '../ui/components/modals/confirmation_modal.dart';
+import '../../ui/components/layout/screen_wrapper.dart';
+import '../../ui/components/layout/page_title.dart';
+import '../../ui/components/buttons/primary_button.dart';
+import '../../ui/components/inputs/text_input.dart';
+import '../../ui/components/modals/confirmation_modal.dart';
 import 'package:inventsmart_mobile/services/models/product.dart';
 import 'package:inventsmart_mobile/services/product_service.dart';
-import '../ui/theme/colors.dart';
+import '../../ui/theme/colors.dart';
 
 class SalesPage extends StatefulWidget {
   const SalesPage({super.key});

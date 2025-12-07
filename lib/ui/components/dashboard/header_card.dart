@@ -5,12 +5,14 @@ class HeaderCard extends StatelessWidget {
   final String username;
   final VoidCallback onNotifications;
   final VoidCallback onLogout;
+  final int notificationsCount; // <-- nuevo parámetro
 
   const HeaderCard({
     super.key,
     required this.username,
     required this.onNotifications,
     required this.onLogout,
+    this.notificationsCount = 0, // valor por defecto
   });
 
   @override
@@ -24,15 +26,20 @@ class HeaderCard extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 20,
+        20,
+        24,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // TOP ROW
+          // TOP ROW: Notificaciones y logout
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -46,34 +53,32 @@ class HeaderCard extends StatelessWidget {
                       size: 26,
                     ),
                   ),
-                  Positioned(
-                    right: 6,
-                    top: 6,
-                    child: Container(
-                      width: 15,
-                      height: 15,
-                      decoration: const BoxDecoration(
-                        color: AppColors.danger,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          "2",
-                          style: TextStyle(
-                            color: AppColors.card,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
+                  if (notificationsCount > 0)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: const BoxDecoration(
+                          color: AppColors.danger,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            notificationsCount.toString(),
+                            style: const TextStyle(
+                              color: AppColors.card,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
-
               const SizedBox(width: 6),
-
-              // Logout con mejor contraste
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.card.withOpacity(0.18),
@@ -87,8 +92,9 @@ class HeaderCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 6),
+          const SizedBox(height: 14),
 
+          // ROW: Avatar y texto
           Row(
             children: [
               const CircleAvatar(
@@ -115,7 +121,7 @@ class HeaderCard extends StatelessWidget {
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
-                  )
+                  ),
                 ],
               )
             ],

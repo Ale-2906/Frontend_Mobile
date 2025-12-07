@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:inventsmart_mobile/services/session_manager.dart';
-import '../ui/theme/colors.dart';
-import '../ui/components/buttons/primary_button.dart';
-import '../ui/components/inputs/email_input.dart';
-import '../ui/components/inputs/password_input.dart';
-import '../ui/components/layout/page_title.dart';
-import '../ui/components/layout/section_card.dart';
-import '../ui/components/layout/screen_wrapper.dart';
-import '../ui/components/layout/spacing.dart';
+import '../../ui/theme/colors.dart';
+import '../../ui/components/buttons/primary_button.dart';
+import '../../ui/components/inputs/email_input.dart';
+import '../../ui/components/inputs/password_input.dart';
+import '../../ui/components/layout/page_title.dart';
+import '../../ui/components/layout/section_card.dart';
+import '../../ui/components/layout/spacing.dart';
 import 'home_page.dart';
-import '../services/auth_service.dart'; 
-import 'auth/forgot_password_page.dart';
+import '../../services/auth_service.dart'; 
+import '../auth/forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -45,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
         _passCtrl.text.trim(),
       );
 
-// ✅ GUARDAR USUARIO EN SESIÓN
+      // ✅ GUARDAR USUARIO EN SESIÓN
       SessionManager.setUsuario(user);
 
       if (!mounted) return;
@@ -75,14 +74,17 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenWrapper(
-      child: SingleChildScrollView(
+    return Scaffold(
+      body: SingleChildScrollView(
         child: Column(
           children: [
-            // ENCABEZADO
+            // ENCABEZADO (toca el tope y los lados)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 30),
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top + 30,
+                bottom: 30,
+              ),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [AppColors.navyDark, AppColors.navy],

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:inventsmart_mobile/services/models/product.dart';
 import 'package:inventsmart_mobile/services/venta_service.dart';
 import 'package:inventsmart_mobile/services/session_manager.dart';
-import '../ui/components/layout/section_card.dart';
-import '../ui/components/buttons/primary_button.dart';
-import '../ui/components/buttons/secondary_button.dart';
-import '../ui/components/misc/check_circle.dart';
-import '../ui/theme/colors.dart';
-import '../utils/pdf_utils.dart';
+import '../../ui/components/layout/section_card.dart';
+import '../../ui/components/buttons/primary_button.dart';
+import '../../ui/components/buttons/secondary_button.dart';
+import '../../ui/components/misc/check_circle.dart';
+import '../../ui/theme/colors.dart';
+import '../../utils/pdf_utils.dart';
 
 class SaleConfirmationPage extends StatefulWidget {
   final Map<Product, int> products;
