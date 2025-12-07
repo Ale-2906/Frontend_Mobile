@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inventsmart_mobile/pages/homepage/home_page.dart';
 import 'package:inventsmart_mobile/services/models/product.dart';
 import 'package:inventsmart_mobile/services/venta_service.dart';
 import 'package:inventsmart_mobile/services/session_manager.dart';
@@ -88,6 +89,23 @@ class _SaleConfirmationPageState extends State<SaleConfirmationPage> {
         backgroundColor: AppColors.navy,
         elevation: 0.2,
         iconTheme: const IconThemeData(color: AppColors.card),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            // ✅ Obtenemos el usuario actual
+            final usuario = SessionManager.getUsuario();
+            final nombre = usuario != null ? usuario.nombre : "Usuario";
+
+            // ✅ Navegamos al HomePage pasando el nombre
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HomePage(userName: nombre),
+              ),
+              (Route<dynamic> route) => false, // limpia la pila
+            );
+          },
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -189,13 +207,6 @@ class _SaleConfirmationPageState extends State<SaleConfirmationPage> {
             /// ✅ BOTONES
             Row(
               children: [
-                Expanded(
-                  child: SecondaryButton(
-                    text: "Compartir",
-                    icon: Icons.share_outlined,
-                    onPressed: () {},
-                  ),
-                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: SecondaryButton(
@@ -218,7 +229,10 @@ class _SaleConfirmationPageState extends State<SaleConfirmationPage> {
 
             PrimaryButton(
               text: "Nueva Venta",
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                // ✅ Indicamos que la venta terminó y que se debe vaciar el carrito
+                Navigator.pop(context, true);
+              },
             ),
 
             const SizedBox(height: 30),

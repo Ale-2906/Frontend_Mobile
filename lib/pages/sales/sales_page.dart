@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:inventsmart_mobile/pages/sales/SaleConfirmationPage.dart';
 
@@ -23,11 +25,39 @@ class _SalesPageState extends State<SalesPage> {
   final Map<Product, int> _cart = {};
   bool _showCart = false;
   bool _loading = true;
+  Timer? _debounce;
+  TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadProducts();
+  }
+
+  // =====================
+  //  BÚSQUEDA
+  // =====================
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      _searchProducts(query);
+    });
+  }
+
+  Future<void> _searchProducts(String query) async {
+    try {
+      final results = query.trim().isEmpty
+          ? await ProductService.getAllProducts()
+          : await ProductService.searchProducts(query.trim());
+
+      setState(() {
+        _products = results;
+      });
+    } catch (e) {
+      debugPrint("Error buscando productos: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error al buscar productos")));
+    }
   }
 
   Future<void> _loadProducts() async {
@@ -134,8 +164,14 @@ class _SalesPageState extends State<SalesPage> {
                       children: [
                         TextInput(
                           hint: "Buscar productos...",
-                          controller: TextEditingController(),
-                          suffix: const Icon(Icons.search, color: Colors.grey),
+                          controller:
+                              searchController, // ✅ usa el controlador existente
+                          onChanged: _onSearchChanged,
+                          suffix: IconButton(
+                            icon: const Icon(Icons.search, color: Colors.grey),
+                            onPressed: () => _searchProducts(
+                                searchController.text), // ✅ también aquí
+                          ),
                         ),
 
                         const SizedBox(height: 22),
@@ -196,7 +232,7 @@ class _SalesPageState extends State<SalesPage> {
                                       Text(
                                         '\$${p.precio.toStringAsFixed(2)}',
                                         style: const TextStyle(
-                                            color: Color(0xFF22C55E),
+                                            color: AppColors.navyDark,
                                             fontWeight: FontWeight.w800),
                                       ),
                                       Text(
@@ -285,8 +321,8 @@ class _SalesPageState extends State<SalesPage> {
                         text: "Procesar Venta",
                         onPressed: _cart.isEmpty
                             ? null
-                            : () {
-                                Navigator.push(
+                            : () async {
+                                final vaciarCarrito = await Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => SaleConfirmationPage(
@@ -295,6 +331,13 @@ class _SalesPageState extends State<SalesPage> {
                                     ),
                                   ),
                                 );
+
+                                // ✅ Si el modal indicó que se finalizó la venta, vaciamos el carrito
+                                if (vaciarCarrito == true) {
+                                  setState(() {
+                                    _cart.clear();
+                                  });
+                                }
                               },
                       ),
                     ],
@@ -366,7 +409,10 @@ class _CartModal extends StatelessWidget {
           /// ───────── TÍTULO
           const Text(
             "Carrito de Compras",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.navy),
+            style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.navy),
           ),
 
           const SizedBox(height: 12),
@@ -478,7 +524,7 @@ class _CartModal extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green,
+                  color: AppColors.navyDark,
                 ),
               ),
             ],
