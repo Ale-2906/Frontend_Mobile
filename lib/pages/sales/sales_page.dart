@@ -1,14 +1,11 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:inventsmart_mobile/pages/sales/SaleConfirmationPage.dart';
 
-// COMPONENTES PROPIOS
 import '../../ui/components/layout/screen_wrapper.dart';
 import '../../ui/components/layout/page_title.dart';
 import '../../ui/components/buttons/primary_button.dart';
 import '../../ui/components/inputs/text_input.dart';
-import '../../ui/components/modals/confirmation_modal.dart';
 import 'package:inventsmart_mobile/services/models/product.dart';
 import 'package:inventsmart_mobile/services/product_service.dart';
 import '../../ui/theme/colors.dart';
@@ -23,10 +20,12 @@ class SalesPage extends StatefulWidget {
 class _SalesPageState extends State<SalesPage> {
   List<Product> _products = [];
   final Map<Product, int> _cart = {};
-  bool _showCart = false;
+
   bool _loading = true;
+  bool _procesandoVenta = false;
+
   Timer? _debounce;
-  TextEditingController searchController = TextEditingController();
+  final TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
@@ -35,7 +34,7 @@ class _SalesPageState extends State<SalesPage> {
   }
 
   // =====================
-  //  BÚSQUEDA
+  // 🔍 BÚSQUEDA CON DEBOUNCE
   // =====================
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
@@ -50,37 +49,47 @@ class _SalesPageState extends State<SalesPage> {
           ? await ProductService.getAllProducts()
           : await ProductService.searchProducts(query.trim());
 
+      if (!mounted) return;
+
       setState(() {
-        _products = results;
+        _products = results.where((p) => p.estado == "activo").toList();
       });
     } catch (e) {
       debugPrint("Error buscando productos: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Error al buscar productos")));
     }
   }
 
+  // =====================
+  // 📦 CARGA INICIAL
+  // =====================
   Future<void> _loadProducts() async {
     try {
       final data = await ProductService.getProductos();
 
+      if (!mounted) return;
+
       setState(() {
-        // ✅ SOLO PRODUCTOS ACTIVOS
         _products = data.where((p) => p.estado == "activo").toList();
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       _loading = false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al cargar productos: $e")),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error al cargar productos: $e")));
     }
   }
 
+  // =====================
+  // 🧮 TOTAL
+  // =====================
   double get _total => _cart.entries
       .map((e) => e.key.precio * e.value)
       .fold(0.0, (a, b) => a + b);
 
+  // =====================
+  // 🛒 CARRITO
+  // =====================
   void _addToCart(Product p) {
     setState(() {
       if (_cart.containsKey(p)) {
@@ -107,6 +116,38 @@ class _SalesPageState extends State<SalesPage> {
     setState(() => _cart.remove(p));
   }
 
+  // =====================
+  // ✅ PROCESAR VENTA SEGURO
+  // =====================
+  Future<void> _procesarVentaSeguro() async {
+    if (_procesandoVenta || _cart.isEmpty) return;
+
+    setState(() => _procesandoVenta = true);
+
+    final vaciarCarrito = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SaleConfirmationPage(
+          products: Map.from(_cart), // ✅ CLONADO SEGURO
+          total: _total,
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (vaciarCarrito == true) {
+      setState(() {
+        _cart.clear();
+      });
+    }
+
+    setState(() => _procesandoVenta = false);
+  }
+
+  // =====================
+  // 🧱 UI
+  // =====================
   @override
   Widget build(BuildContext context) {
     return ScreenWrapper(
@@ -114,19 +155,23 @@ class _SalesPageState extends State<SalesPage> {
         backgroundColor: AppColors.navy,
         elevation: 0.3,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.background),
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const PageTitle(
-            title: 'Nueva Venta', size: 20, color: AppColors.background),
+          title: 'Nueva Venta',
+          size: 20,
+          color: Colors.white,
+        ),
         actions: [
           Stack(
             children: [
               IconButton(
                 icon: const Icon(Icons.shopping_cart_outlined,
-                    color: AppColors.background, size: 28),
-                onPressed: _cart.isEmpty ? null : () => _openCartModal(context),
+                    color: Colors.white, size: 28),
+                onPressed:
+                    _cart.isEmpty ? null : () => _openCartModal(context),
               ),
               if (_cart.isNotEmpty)
                 Positioned(
@@ -141,7 +186,7 @@ class _SalesPageState extends State<SalesPage> {
                     child: Text(
                       _cart.length.toString(),
                       style: const TextStyle(
-                        color: AppColors.background,
+                        color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -160,104 +205,93 @@ class _SalesPageState extends State<SalesPage> {
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         TextInput(
                           hint: "Buscar productos...",
-                          controller:
-                              searchController, // ✅ usa el controlador existente
+                          controller: searchController,
                           onChanged: _onSearchChanged,
                           suffix: IconButton(
-                            icon: const Icon(Icons.search, color: Colors.grey),
-                            onPressed: () => _searchProducts(
-                                searchController.text), // ✅ también aquí
+                            icon:
+                                const Icon(Icons.search, color: Colors.grey),
+                            onPressed: () =>
+                                _searchProducts(searchController.text),
                           ),
                         ),
+                        const SizedBox(height: 16),
 
-                        const SizedBox(height: 22),
-
-                        /// 📦 PRODUCTOS
                         PageTitle(
-                          title: "Productos Disponibles (${_products.length})",
+                          title:
+                              "Productos Disponibles (${_products.length})",
                           size: 16,
                         ),
                         const SizedBox(height: 12),
 
-                        SizedBox(
-                          child: GridView.builder(
-                            padding: EdgeInsets.zero,
-                            shrinkWrap: true, // ✅ permite crecer según cantidad
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 12,
-                              childAspectRatio: 0.75,
-                            ),
-                            itemCount: _products.length,
-                            itemBuilder: (context, index) {
-                              final p = _products[index];
-
-                              return GestureDetector(
-                                onTap: () => _addToCart(p),
-                                child: Container(
-                                  padding: const EdgeInsets.all(14),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(color: AppColors.border),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: Colors.black12,
-                                        blurRadius: 6,
-                                        offset: Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Icon(Icons.inventory_2_rounded,
-                                          size: 40, color: AppColors.navy),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        p.nombre,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.textPrimary),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '\$${p.precio.toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                            color: AppColors.navyDark,
-                                            fontWeight: FontWeight.w800),
-                                      ),
-                                      Text(
-                                        'Stock: ${p.stock}',
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            color: AppColors.textSecondary),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
+                        GridView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 0.75,
                           ),
+                          itemCount: _products.length,
+                          itemBuilder: (context, index) {
+                            final p = _products[index];
+
+                            return GestureDetector(
+                              onTap: () => _addToCart(p),
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border:
+                                      Border.all(color: AppColors.border),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 6,
+                                      offset: Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.inventory_2_rounded,
+                                        size: 40, color: AppColors.navy),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      p.nombre,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w700),
+                                    ),
+                                    Text(
+                                      '\$${p.precio.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    Text('Stock: ${p.stock}',
+                                        style: const TextStyle(fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
                   ),
                 ),
 
-                /// ✅ PIE DE VENTA
-                /// ✅ CARD DE TOTAL + BOTÓN
+                // ✅ FOOTER DE VENTA
                 Container(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 22),
-                  decoration: BoxDecoration(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
                     color: Colors.white,
                     boxShadow: [
                       BoxShadow(
@@ -269,76 +303,21 @@ class _SalesPageState extends State<SalesPage> {
                   ),
                   child: Column(
                     children: [
-                      /// 🔹 CARD TOTAL
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 14),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF9FAFB),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            /// TEXTO TOTAL
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "Total",
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "\$${_total.toStringAsFixed(2)}",
-                                  style: const TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textPrimary),
-                                ),
-                              ],
-                            ),
-
-                            /// CANTIDAD DE PRODUCTOS
-                            Text(
-                              "${_cart.length} productos",
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("Total",
+                              style: TextStyle(fontSize: 14)),
+                          Text("\$${_total.toStringAsFixed(2)}",
                               style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold)),
+                        ],
                       ),
-
                       const SizedBox(height: 12),
-
-                      /// 🔹 BOTÓN PROCESAR
                       PrimaryButton(
                         text: "Procesar Venta",
-                        onPressed: _cart.isEmpty
-                            ? null
-                            : () async {
-                                final vaciarCarrito = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => SaleConfirmationPage(
-                                      products: _cart,
-                                      total: _total,
-                                    ),
-                                  ),
-                                );
-
-                                // ✅ Si el modal indicó que se finalizó la venta, vaciamos el carrito
-                                if (vaciarCarrito == true) {
-                                  setState(() {
-                                    _cart.clear();
-                                  });
-                                }
-                              },
+                        onPressed: _procesarVentaSeguro,
                       ),
                     ],
                   ),
@@ -348,7 +327,9 @@ class _SalesPageState extends State<SalesPage> {
     );
   }
 
-  /// ✅ MODAL DEL CARRITO
+  // =====================
+  // 🪟 MODAL DEL CARRITO
+  // =====================
   void _openCartModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -357,30 +338,18 @@ class _SalesPageState extends State<SalesPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return _CartModal(
-              cart: _cart,
-              total: _total,
-              add: (p) {
-                _addToCart(p);
-                setModalState(() {}); // ✅ actualiza el modal
-              },
-              remove: (p) {
-                _removeFromCart(p);
-                setModalState(() {});
-              },
-              delete: (p) {
-                _deleteFromCart(p);
-                setModalState(() {});
-              },
-            );
-          },
+        return _CartModal(
+          cart: _cart,
+          total: _total,
+          add: _addToCart,
+          remove: _removeFromCart,
+          delete: _deleteFromCart,
         );
       },
     );
   }
 }
+
 
 /// ✅ MODAL DEL CARRITO
 class _CartModal extends StatelessWidget {
