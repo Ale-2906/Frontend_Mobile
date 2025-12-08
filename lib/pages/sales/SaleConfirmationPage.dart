@@ -3,6 +3,7 @@ import 'package:inventsmart_mobile/pages/homepage/home_page.dart';
 import 'package:inventsmart_mobile/services/models/product.dart';
 import 'package:inventsmart_mobile/services/venta_service.dart';
 import 'package:inventsmart_mobile/services/session_manager.dart';
+
 import '../../ui/components/layout/section_card.dart';
 import '../../ui/components/buttons/primary_button.dart';
 import '../../ui/components/buttons/secondary_button.dart';
@@ -26,24 +27,25 @@ class SaleConfirmationPage extends StatefulWidget {
 
 class _SaleConfirmationPageState extends State<SaleConfirmationPage> {
   bool _loading = true;
-  String _fecha = DateTime.now().toString();
+  bool _ventaEjecutada = false; // ✅ BLOQUEO TOTAL CONTRA DUPLICADOS
+
+  String _fecha = "";
   String _empleado = "Cargando...";
   String _ventaId = "Cargando...";
 
   @override
   void initState() {
     super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _registrarVenta();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _registrarVenta());
   }
 
-  /// ✅ REGISTRO REAL DE VENTA COMPATIBLE CON TU BACKEND
+  /// ✅ REGISTRO REAL DE VENTA SIN DUPLICADOS
   Future<void> _registrarVenta() async {
+    if (_ventaEjecutada) return; // ✅ IMPIDE DOBLE EJECUCIÓN
+    _ventaEjecutada = true;
+
     try {
       final usuario = SessionManager.getUsuario();
-
       if (usuario == null) {
         throw Exception("No hay usuario en sesión");
       }
@@ -55,7 +57,8 @@ class _SaleConfirmationPageState extends State<SaleConfirmationPage> {
 
       setState(() {
         _empleado = usuario.nombre;
-        _ventaId = ventaId.toString(); // ✅ ID REAL
+        _ventaId = ventaId.toString();
+        _fecha = DateTime.now().toString();
         _loading = false;
       });
     } catch (e) {
@@ -92,17 +95,15 @@ class _SaleConfirmationPageState extends State<SaleConfirmationPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () {
-            // ✅ Obtenemos el usuario actual
             final usuario = SessionManager.getUsuario();
             final nombre = usuario != null ? usuario.nombre : "Usuario";
 
-            // ✅ Navegamos al HomePage pasando el nombre
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
                 builder: (context) => HomePage(userName: nombre),
               ),
-              (Route<dynamic> route) => false, // limpia la pila
+              (Route<dynamic> route) => false,
             );
           },
         ),
@@ -142,6 +143,7 @@ class _SaleConfirmationPageState extends State<SaleConfirmationPage> {
                   const SizedBox(height: 12),
                   _row("Fecha y Hora", _fecha),
                   _row("Empleado", _empleado),
+                  _row("Venta ID", _ventaId),
                 ],
               ),
             ),
@@ -230,7 +232,6 @@ class _SaleConfirmationPageState extends State<SaleConfirmationPage> {
             PrimaryButton(
               text: "Nueva Venta",
               onPressed: () {
-                // ✅ Indicamos que la venta terminó y que se debe vaciar el carrito
                 Navigator.pop(context, true);
               },
             ),

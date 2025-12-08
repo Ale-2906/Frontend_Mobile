@@ -6,7 +6,7 @@ class VentaService {
   static const String baseUrl = "http://192.168.1.27:3000/api";
 
   /// ✅ REGISTRAR UNA SOLA VENTA POR PRODUCTO
-  static Future<void> registrarVenta({
+  /*static Future<void> registrarVenta({
     required int productoId,
     required int unidades,
     required int usuarioId,
@@ -32,51 +32,35 @@ class VentaService {
       print("❌ Error backend: ${response.body}");
       throw Exception("Error al registrar la venta");
     }
-  }
+  }*/
 
   /// ✅ REGISTRAR TODO EL CARRITO (ENVÍOS MÚLTIPLES)
   static Future<int> registrarVentaCarrito({
     required int usuarioId,
     required Map<Product, int> productos,
   }) async {
-    int ventaId = 0;
+    final response = await http.post(
+      Uri.parse("$baseUrl/ventas/carrito"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "usuario_id": usuarioId,
+        "productos": productos.entries
+            .map((e) => {
+                  "producto_id": e.key.id,
+                  "unidades": e.value,
+                })
+            .toList(),
+      }),
+    );
 
-    for (final entry in productos.entries) {
-      final producto = entry.key;
-      final cantidad = entry.value;
+    final data = jsonDecode(response.body);
 
-      final response = await http.post(
-        Uri.parse("$baseUrl/ventas"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "producto_id": producto.id,
-          "unidades": cantidad,
-          "usuario_id": usuarioId,
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode != 201) {
-        throw Exception(data["message"] ?? "Error registrando venta");
-      }
-
-      // ✅ SOLO TOMAMOS EL ID LA PRIMERA VEZ
-      ventaId = data["venta_id"];
+    if (response.statusCode != 201) {
+      throw Exception(data["message"] ?? "Error registrando venta");
     }
 
-    return ventaId;
-  }
-   // Total de ventas acumulado
-  static Future<Map<String, dynamic>> getTotalVentas() async {
-    final response = await http.get(Uri.parse("$baseUrl/ventas/total"));
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data['data'];
-    } else {
-      throw Exception("Error al obtener total de ventas");
-    }
+    // ✅ AHORA SI EXISTE
+    return data["venta_id"];
   }
 
   // Total de ventas del día
