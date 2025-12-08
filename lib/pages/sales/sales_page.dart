@@ -331,30 +331,31 @@ class _SalesPageState extends State<SalesPage> {
   // 🪟 MODAL DEL CARRITO
   // =====================
   void _openCartModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) {
-        return _CartModal(
-          cart: _cart,
-          total: _total,
-          add: _addToCart,
-          remove: _removeFromCart,
-          delete: _deleteFromCart,
-        );
-      },
-    );
-  }
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (_) {
+      return _CartModal(
+        cart: _cart,
+        getTotal: () => _total, // <-- usa getTotal en lugar de total
+        add: _addToCart,
+        remove: _removeFromCart,
+        delete: _deleteFromCart,
+      );
+    },
+  );
+}
+
 }
 
 
 /// ✅ MODAL DEL CARRITO
-class _CartModal extends StatelessWidget {
+class _CartModal extends StatefulWidget {
   final Map<Product, int> cart;
-  final double total;
+  final double Function() getTotal; // <-- callback para calcular total
   final Function(Product) add;
   final Function(Product) remove;
   final Function(Product) delete;
@@ -362,11 +363,30 @@ class _CartModal extends StatelessWidget {
   const _CartModal({
     super.key,
     required this.cart,
-    required this.total,
+    required this.getTotal,
     required this.add,
     required this.remove,
     required this.delete,
   });
+
+  @override
+  State<_CartModal> createState() => _CartModalState();
+}
+
+class _CartModalState extends State<_CartModal> {
+  double _modalTotal = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _modalTotal = widget.getTotal();
+  }
+
+  void _updateTotal() {
+    setState(() {
+      _modalTotal = widget.getTotal();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -375,7 +395,6 @@ class _CartModal extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          /// ───────── TÍTULO
           const Text(
             "Carrito de Compras",
             style: TextStyle(
@@ -383,13 +402,12 @@ class _CartModal extends StatelessWidget {
                 fontWeight: FontWeight.bold,
                 color: AppColors.navy),
           ),
-
           const SizedBox(height: 12),
 
-          /// ───────── LISTA
+          /// ───────── LISTA DE PRODUCTOS
           Expanded(
             child: ListView(
-              children: cart.entries.map((e) {
+              children: widget.cart.entries.map((e) {
                 final p = e.key;
                 final qty = e.value;
 
@@ -405,11 +423,11 @@ class _CartModal extends StatelessWidget {
                         InkWell(
                           onTap: () {
                             if (qty > 1) {
-                              remove(p);
+                              widget.remove(p);
                             } else {
-                              delete(
-                                  p); // si queda en 1 y presiona -, se elimina
+                              widget.delete(p);
                             }
+                            _updateTotal(); // <-- ACTUALIZA EL TOTAL
                           },
                           child: Container(
                             width: 28,
@@ -438,7 +456,8 @@ class _CartModal extends StatelessWidget {
                         InkWell(
                           onTap: () {
                             if (qty < p.stock) {
-                              add(p);
+                              widget.add(p);
+                              _updateTotal(); // <-- ACTUALIZA EL TOTAL
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -461,9 +480,12 @@ class _CartModal extends StatelessWidget {
 
                         const SizedBox(width: 10),
 
-                        /// 🗑️ BASURERO ROJO
+                        /// 🗑️ BOTÓN ELIMINAR
                         InkWell(
-                          onTap: () => delete(p),
+                          onTap: () {
+                            widget.delete(p);
+                            _updateTotal(); // <-- ACTUALIZA EL TOTAL
+                          },
                           child: const Icon(
                             Icons.delete,
                             color: Colors.red,
@@ -489,7 +511,7 @@ class _CartModal extends StatelessWidget {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               Text(
-                "\$${total.toStringAsFixed(2)}",
+                "\$${_modalTotal.toStringAsFixed(2)}",
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -501,7 +523,7 @@ class _CartModal extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          /// ───────── BOTÓN
+          /// ───────── BOTÓN CERRAR
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
