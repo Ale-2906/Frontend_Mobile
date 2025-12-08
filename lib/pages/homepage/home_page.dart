@@ -65,6 +65,7 @@ class _HomePageState extends State<HomePage> {
     try {
       final stats = await ProductService.getEstadisticas();
       final ventasHoyData = await VentaService.getTotalVentasHoy();
+      final ventasTotalesData = await VentaService.getTotalVentas(); // ✅ NUEVO
       final prods = await ProductService.getAllProducts();
 
       setState(() {
@@ -72,6 +73,8 @@ class _HomePageState extends State<HomePage> {
           ...stats,
           'ventas_hoy': ventasHoyData['ventas_hoy'] ?? 0,
           'total_hoy': ventasHoyData['total_hoy'] ?? 0,
+          'total_ventas_acumuladas':
+              ventasTotalesData['data']['total_ventas'] ?? "0",
         };
         productos = prods;
       });
@@ -221,11 +224,11 @@ class _HomePageState extends State<HomePage> {
                             children: [
                               Expanded(
                                 child: KpiCard(
-                                  icon: Icons.warning_amber_rounded,
-                                  iconColor: Colors.amber,
+                                  icon: Icons.receipt_long,
+                                  iconColor: Colors.orange,
                                   value:
-                                      "${estadisticas['productos_stock_bajo'] ?? 0}",
-                                  label: "Stock Bajo",
+                                      "\$${estadisticas['total_ventas_acumuladas'] ?? 0}",
+                                  label: "Ventas Totales",
                                 ),
                               ),
                               const SizedBox(width: 14),
@@ -296,7 +299,9 @@ class _HomePageState extends State<HomePage> {
                           const SizedBox(height: 16),
 
                           ...productos
-                              .where((p) => p.estado.toLowerCase() == 'activo')// <-- solo activos
+                              .where((p) =>
+                                  p.estado.toLowerCase() ==
+                                  'activo') // <-- solo activos
                               .map((p) => ProductItem(
                                     name: p.nombre,
                                     stock: "Stock: ${p.stock} unidades",

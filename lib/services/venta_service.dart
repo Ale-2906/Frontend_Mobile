@@ -74,4 +74,16 @@ class VentaService {
       throw Exception("Error al obtener total de ventas hoy");
     }
   }
+  // ✅✅✅ VENTAS TOTALES ACUMULADAS (NUEVO)
+  static Future<Map<String, dynamic>> getTotalVentas() async {
+    final url = Uri.parse('$baseUrl/ventas/total');
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception("Error al obtener ventas totales");
+    }
+  }
 }
